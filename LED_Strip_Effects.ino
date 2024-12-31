@@ -13,7 +13,7 @@ void setup() {
     new Service::AccessoryInformation();
     new Characteristic::Identify();
 
-    new LED(); // Инициализация светодиодной ленты
+    new LED();
 }
 
 void loop() {
