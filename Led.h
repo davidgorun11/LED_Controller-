@@ -4,12 +4,12 @@
 #include <FastLED.h>
 #include <HomeSpan.h>
 
-#define LED_PIN 16         // Пин для подключения ленты
-#define NUM_LEDS 144       // Количество светодиодов в ленте
-#define COLOR_ORDER GRB    // Порядок цветов для ленты
-#define CHIPSET WS2812B    // Тип чипа ленты
+#define LED_PIN 16         // Pin for connecting the LED strip
+#define NUM_LEDS 144       // Number of LEDs in the strip
+#define COLOR_ORDER GRB    // Color order for the strip
+#define CHIPSET WS2812B    // Type of LED chipset
 
-CRGB leds[NUM_LEDS];      // Массив для управления светодиодами
+CRGB leds[NUM_LEDS];      // Array for controlling LEDs
 
 struct LED : Service::LightBulb {
     SpanCharacteristic *power;
@@ -17,9 +17,9 @@ struct LED : Service::LightBulb {
     SpanCharacteristic *hue;
     SpanCharacteristic *saturation;
 
-    // Новые характеристики для эффектов
-    SpanCharacteristic *effectIntensity; // Интенсивность эффекта
-    SpanCharacteristic *effectSelection; // Выбор эффекта
+    // New characteristics for effects
+    SpanCharacteristic *effectIntensity; // Effect intensity
+    SpanCharacteristic *effectSelection; // Effect selection
 
     LED() : Service::LightBulb() {
         power = new Characteristic::On();
@@ -27,18 +27,18 @@ struct LED : Service::LightBulb {
         hue = new Characteristic::Hue(0);
         saturation = new Characteristic::Saturation(0);
 
-        // Создаем пользовательские характеристики
+        // Create custom characteristics with unique UUIDs
         effectIntensity = new SpanCharacteristic(
             "00000004-0000-1000-8000-0026BB765291", // Custom UUID
-            PR | PW                                 // Permissions
+            PR | PW                                   // Permissions
         );
-        effectIntensity->setRange(0, 100, 1);       // Диапазон: 0-100
+        effectIntensity->setRange(0, 100, 1);        // Range: 0-100
 
         effectSelection = new SpanCharacteristic(
             "00000005-0000-1000-8000-0026BB765291", // Custom UUID
-            PR | PW                                 // Permissions
+            PR | PW                                   // Permissions
         );
-        effectSelection->setRange(0, 2, 1);         // Диапазон: 0-2 (0 - Нет эффекта, 1 - Мигание, 2 - Радуга)
+        effectSelection->setRange(0, 2, 1);          // Range: 0-2 (0 - No effect, 1 - Blinking, 2 - Rainbow)
 
         FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
         FastLED.clear();
@@ -49,9 +49,9 @@ struct LED : Service::LightBulb {
         if (power->getNewVal()) {
             applySettings();
 
-            // Выбор эффекта
+            // Effect selection
             int effect = effectSelection->getNewVal();
-            int intensity = effectIntensity->getNewVal(); // Получение интенсивности
+            int intensity = effectIntensity->getNewVal(); // Get intensity
             switch (effect) {
                 case 1:
                     applyBlinkingEffect(intensity);
@@ -60,7 +60,7 @@ struct LED : Service::LightBulb {
                     applyRainbowEffect(intensity);
                     break;
                 default:
-                    applyStaticColor(); // Без эффекта, только цвет
+                    applyStaticColor(); // No effect, just static color
                     break;
             }
         } else {
@@ -91,7 +91,7 @@ struct LED : Service::LightBulb {
             leds[i] = CRGB::White;
         }
         FastLED.show();
-        delay(1000 / intensity); // Скорость мигания зависит от интенсивности
+        delay(1000 / intensity); // Blinking speed depends on intensity
         FastLED.clear();
         FastLED.show();
         delay(1000 / intensity);
