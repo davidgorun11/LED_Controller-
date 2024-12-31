@@ -11,15 +11,18 @@
 
 CRGB leds[NUM_LEDS];      // Array for controlling LEDs
 
+CUSTOM_CHAR(EffectIntensity, "00000004-0000-1000-8000-0026BB765291", PR | PW, UINT8, 0, 0, 100, true);
+CUSTOM_CHAR(EffectSelection, "00000005-0000-1000-8000-0026BB765291", PR | PW, UINT8, 0, 0, 2, true);
+
 struct LED : Service::LightBulb {
     SpanCharacteristic *power;
     SpanCharacteristic *brightness;
     SpanCharacteristic *hue;
     SpanCharacteristic *saturation;
 
-    // New characteristics for effects
-    SpanCharacteristic *effectIntensity; // Effect intensity
-    SpanCharacteristic *effectSelection; // Effect selection
+    // Custom characteristics for effects
+    SpanCharacteristic *effectIntensity;
+    SpanCharacteristic *effectSelection;
 
     LED() : Service::LightBulb() {
         power = new Characteristic::On();
@@ -27,18 +30,9 @@ struct LED : Service::LightBulb {
         hue = new Characteristic::Hue(0);
         saturation = new Characteristic::Saturation(0);
 
-        // Create custom characteristics with unique UUIDs
-        effectIntensity = new SpanCharacteristic(
-            "00000004-0000-1000-8000-0026BB765291", // Custom UUID
-            PR | PW                                   // Permissions
-        );
-        effectIntensity->setRange(0, 100, 1);        // Range: 0-100
-
-        effectSelection = new SpanCharacteristic(
-            "00000005-0000-1000-8000-0026BB765291", // Custom UUID
-            PR | PW                                   // Permissions
-        );
-        effectSelection->setRange(0, 2, 1);          // Range: 0-2 (0 - No effect, 1 - Blinking, 2 - Rainbow)
+        // Initialize custom characteristics
+        effectIntensity = new Characteristic::EffectIntensity(50); // Default value: 50
+        effectSelection = new Characteristic::EffectSelection(0);  // Default value: 0 (No effect)
 
         FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
         FastLED.clear();
@@ -49,9 +43,9 @@ struct LED : Service::LightBulb {
         if (power->getNewVal()) {
             applySettings();
 
-            // Effect selection
+            // Handle effect selection
             int effect = effectSelection->getNewVal();
-            int intensity = effectIntensity->getNewVal(); // Get intensity
+            int intensity = effectIntensity->getNewVal();
             switch (effect) {
                 case 1:
                     applyBlinkingEffect(intensity);
@@ -60,7 +54,7 @@ struct LED : Service::LightBulb {
                     applyRainbowEffect(intensity);
                     break;
                 default:
-                    applyStaticColor(); // No effect, just static color
+                    applyStaticColor();
                     break;
             }
         } else {
